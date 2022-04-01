@@ -371,6 +371,6 @@ void servo_arm(int n, int m){
 }
 
 void servo_leg(int g, int h){
-	REG_TC2_COUNT16_CC1 = (((F_CPU/(64*50))* n )/2000)-1;
-	REG_TC3_COUNT16_CC1 = (((F_CPU/(64*50))* m )/2000)-1;
+	REG_TC2_COUNT16_CC1 = (((F_CPU/(64*50))* g )/2000)-1;
+	REG_TC3_COUNT16_CC1 = (((F_CPU/(64*50))* h )/2000)-1;
 }
