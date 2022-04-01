@@ -24,10 +24,11 @@ void init_Clock48();
 void UART3_init(uint32_t baud);
 void printString (char * s);
 void printNum(uint32_t v, int base, int digits);
-void turn_around();
+void turn_around(int t);
 void coin_pickup_reverse();
 void coin_pickup();
-void servo(int n, int m);
+void servo_arm(int n, int m);
+void servo_leg(int g, int h);
 void move_foward();
 
 
@@ -267,7 +268,17 @@ int main(void)
 //output: 1 if wire detected, else 0
 -----------------------------------------------------------------*/
 int get_perimeter_reading(){
+    
+    float voltage = ADC_read(channel); //idk what channel...
+    float ctr_voltage; //control voltage (voltage reading when tank circuit is not close to perimeter wire)
+                        //TBD through testing
 
+    if (voltage > ctr_voltage) //if tank circuit is close to perimeter wire, peak detector voltage goes up
+	{								
+		return 1;
+	}
+	
+	return 0;
 }
 
 /*-----------------------------------------------------------------
@@ -276,7 +287,23 @@ int get_perimeter_reading(){
 //output: 1 if coin detected, else 0
 -----------------------------------------------------------------*/
 int detect_coin(){
-
+	float period;
+	float ctr_period;	// Control period (insert measured period for when no coins are present)
+						// Or make this a global constant after measuring
+						// can also write a simple initializing function at robot startup to set
+						
+	period = GetPeriod(20)/(F_CPU*20);		// arbitrarily chosen to get period of 20 cycles
+											// increase or decrease # depending on how slowly this executes
+											// F_CPU should be a global constant for the chip's operating frequency 
+												// (MUST be different than perimeter detection frequency)
+											// Refer to period.c in the SAMD examples provided on Canvas from the lab 6/project 2 module
+											
+	if (period < 0.9*ctr_period)	// When measured period is < 90% of control period, flag coin as detected
+	{								// Change multiplier as see fit for proper detection
+		return 1;
+	}
+	
+	return 0;
 }
 
 
@@ -286,28 +313,50 @@ int detect_coin(){
 //output: none
 -----------------------------------------------------------------*/
 void move_forward(){
-	
+    int x, y;
+    x = 360;
+    x = 360;
+    stop = 0;
+    while(stop != 5) {
+        if (detect_coin()){
+            stop = 5;   
+        }
+
+        else if (get_perimeter_reading()){
+            stop = 5;
+        }
+
+        else {
+            servo_leg(x,y);
+        } 
+    }
 }
 
 /*-----------------------------------------------------------------
-//does a 90 degree turn if the perimeter wire is detected
+//does a t degree turn if the perimeter wire is detected
 //input: none
 //output: none
 -----------------------------------------------------------------*/
-void turn_around(){
-
+void turn_around(int t){
+    int x, y;
+    x = 0
+    y = 0;
+    servo_leg(x, t);    // x not moving, t moving -> turning. 
 }
 
 /*-----------------------------------------------------------------
-//operate the servos to pick up the coin
+//operate the servos to pick up the coin (60[=0] ~ 240[=180])
 //input: none
 //output: none
 -----------------------------------------------------------------*/
 void coin_pickup() {
 	int x, y
-	x = 60;
-	y = 60;
+	x = 240;
+	y = 0;
+
 	servo(x, y);
+    delayMs(100);
+    servo(y,x);
 }
 
 /*-----------------------------------------------------------------
@@ -316,7 +365,12 @@ void coin_pickup() {
 			m - TC3 Servo
 //output: none
 -----------------------------------------------------------------*/
-void servo(int n, int m){
+void servo_arm(int n, int m){
+	REG_TC2_COUNT16_CC1 = (((F_CPU/(64*50))* n )/2000)-1;
+	REG_TC3_COUNT16_CC1 = (((F_CPU/(64*50))* m )/2000)-1;
+}
+
+void servo_leg(int g, int h){
 	REG_TC2_COUNT16_CC1 = (((F_CPU/(64*50))* n )/2000)-1;
 	REG_TC3_COUNT16_CC1 = (((F_CPU/(64*50))* m )/2000)-1;
 }

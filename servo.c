@@ -5,6 +5,11 @@ void init_Clock48 (void);
 void UART3_init(uint32_t baud);
 void printString (char * s);
 int getString (char * s, int echo, int max);
+void move_forward();
+void coin_pickup();
+void turn_around(int t);
+void servo_arm(int n, int m);
+void servo_leg(int g, int h);
 
 void Configure_TC2 ()
 {
@@ -23,7 +28,6 @@ void Configure_TC2 ()
     PORT->Group[0].PINCFG[17].bit.PMUXEN = 1;
     PORT->Group[0].PMUX[8].reg = 0x50;
 }
-
 
 void Configure_TC3 ()
 {
@@ -73,4 +77,51 @@ int main(void)
 		    REG_TC2_COUNT16_CC1 = (((F_CPU/(64*50))*n)/2000)-1;
 	    }
    }
+}
+
+void move_forward(){
+    int x, y;
+    x = 360;
+    x = 360;
+    stop = 0;
+    while(stop != 5) {
+        if (detect_coin()){
+            stop = 5;   
+        }
+
+        else if (get_perimeter_reading()){
+            stop = 5;
+        }
+
+        else {
+            servo_leg(x,y);
+        } 
+    }
+}
+
+void turn_around(int t){
+    int x, y;
+    x = 0
+    y = 0;
+    servo_leg(x, t);    // x not moving, t moving -> turning. 
+}
+
+void coin_pickup(){
+	int x, y
+	x = 240;
+	y = 0;
+
+	servo(x, y);
+    delayMs(100);
+    servo(y,x);
+}
+
+void servo_arm(int n, int m){
+	REG_TC2_COUNT16_CC1 = (((F_CPU/(64*50))* n )/2000)-1;
+	REG_TC3_COUNT16_CC1 = (((F_CPU/(64*50))* m )/2000)-1;
+}
+
+void servo_leg(int g, int h){
+	REG_TC2_COUNT16_CC1 = (((F_CPU/(64*50))* n )/2000)-1;
+	REG_TC3_COUNT16_CC1 = (((F_CPU/(64*50))* m )/2000)-1;
 }
